@@ -63,9 +63,9 @@ char *my_strdup(char *ptr)
 	return rv;
 }
 
-#define malloc I_really_should_not_be_using_a_bare_malloc
-#define realloc I_really_should_not_be_using_a_bare_realloc
-#define strdup I_really_should_not_be_using_a_bare_strdup
+#define malloc I_really_should_not_be_using_a_bare_malloc_eheheh
+#define realloc I_really_should_not_be_using_a_bare_realloc_eheheh
+#define strdup I_really_should_not_be_using_a_bare_strdup_eheheh
 
 static const int NO_REDIR = -1;
 
