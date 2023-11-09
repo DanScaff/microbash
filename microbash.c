@@ -1,4 +1,3 @@
-#error Please read the accompanying microbash.pdf before hacking this source code (and removing this line).
 /*
  * Micro-bash v2.2
  *
@@ -23,8 +22,8 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+//#include <readline/readline.h>
+//#include <readline/history.h>
 #include <stdint.h>
 
 void fatal(const char * const msg)
@@ -89,6 +88,7 @@ void free_command(command_t * const c)
 {
 	assert(c==0 || c->n_args==0 || (c->n_args > 0 && c->args[c->n_args] == 0)); /* sanity-check: if c is not null, then it is either empty (in case of parsing error) or its args are properly NULL-terminated */
 	/*** TO BE DONE START ***/
+	
 	/*** TO BE DONE END ***/
 }
 
@@ -290,6 +290,9 @@ void execute_line(const line_t * const l)
 			/* Open c->in_pathname and assign the file-descriptor to curr_stdin
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
+			int fd = open(c->in_pathname, O_RDONLY);
+			if(fd == NULL) fatal_errno("wrong path provided");
+			curr_stdin = fd;
 			/*** TO BE DONE END ***/
 		}
 		if (c->out_pathname) {
@@ -297,11 +300,15 @@ void execute_line(const line_t * const l)
 			/* Open c->out_pathname and assign the file-descriptor to curr_stdout
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
+			int fd = open(c->out_pathname, O_WRONLY);
+			if(fd == NULL) fatal_errno("wrong path provided");
+			curr_stdout = fd;
 			/*** TO BE DONE END ***/
 		} else if (a != (l->n_commands - 1)) { /* unless we're processing the last command, we need to connect the current command and the next one with a pipe */
 			int fds[2];
 			/* Create a pipe in fds, and set FD_CLOEXEC in both file-descriptor flags */
 			/*** TO BE DONE START ***/
+			
 			/*** TO BE DONE END ***/
 			curr_stdout = fds[1];
 			next_stdin = fds[0];
@@ -336,10 +343,27 @@ int main()
 		 * The memory area must be allocated (directly or indirectly) via malloc.
 		 */
 		/*** TO BE DONE START ***/
+		size_t size = sizeof(char) * 1024;
+		char * buffer = (char *) my_malloc(size);
+		pwd = getcwd(buffer, size);
+		if(pwd == NULL) fatal_errno("error");
 		/*** TO BE DONE END ***/
 		pwd = my_realloc(pwd, strlen(pwd) + prompt_suffix_len + 1);
 		strcat(pwd, prompt_suffix);
-		char * const line = readline(pwd);
+		//da qua ho sostituito la funzione della libreria
+		const int max_line_size = 512;
+		char * line = my_malloc(max_line_size);
+		printf("%s", pwd);
+		if (!fgets(line, max_line_size, stdin)) {
+			free(line);
+			line = 0;
+			putchar('\n');
+		} else {
+			size_t l = strlen(line);
+			if (l && line[--l]=='\n')
+				line[l] = 0;
+		}
+		//fino a qua ho sostituito la funzione della libreria
 		free(pwd);
 		if (!line) break;
 		execute(line);
