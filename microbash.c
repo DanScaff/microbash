@@ -88,7 +88,16 @@ void free_command(command_t * const c)
 {
 	assert(c==0 || c->n_args==0 || (c->n_args > 0 && c->args[c->n_args] == 0)); /* sanity-check: if c is not null, then it is either empty (in case of parsing error) or its args are properly NULL-terminated */
 	/*** TO BE DONE START ***/
-	
+	c->n_args = 0;
+
+	free(c->args);
+	c->args = NULL;
+
+	free(c->out_pathname);
+	c->out_pathname = NULL;
+
+	free(c->in_pathname);
+	c->in_pathname = NULL;
 	/*** TO BE DONE END ***/
 }
 
@@ -96,6 +105,10 @@ void free_line(line_t * const l)
 {
 	assert(l==0 || l->n_commands>=0); /* sanity-check */
 	/*** TO BE DONE START ***/
+	l->n_commands = 0;
+
+	free(l->commands);
+	l->commands = NULL;
 	/*** TO BE DONE END ***/
 }
 
@@ -206,6 +219,18 @@ check_t check_redirections(const line_t * const l)
 	 * message and return CHECK_FAILED otherwise
 	 */
 	/*** TO BE DONE START ***/
+	for(int i = 0; i<l->n_commands; i++) {
+		if(i > 0) {
+			for(int j = 0 ; j < l->commands[i] ; j++) {
+				if(l->commands[i][j])
+			}
+		}
+		if(i < l->n_commands - 1){
+			
+		}
+
+	}
+																																																																														
 	/*** TO BE DONE END ***/
 	return CHECK_OK;
 }
@@ -291,7 +316,7 @@ void execute_line(const line_t * const l)
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
 			int fd = open(c->in_pathname, O_RDONLY);
-			if(fd == NULL) fatal_errno("wrong path provided");
+			if(fd == -1) fatal_errno("wrong path provided");
 			curr_stdin = fd;
 			/*** TO BE DONE END ***/
 		}
@@ -301,14 +326,16 @@ void execute_line(const line_t * const l)
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
 			int fd = open(c->out_pathname, O_WRONLY);
-			if(fd == NULL) fatal_errno("wrong path provided");
+			if(fd == -1) fatal_errno("wrong path provided");
 			curr_stdout = fd;
 			/*** TO BE DONE END ***/
 		} else if (a != (l->n_commands - 1)) { /* unless we're processing the last command, we need to connect the current command and the next one with a pipe */
 			int fds[2];
 			/* Create a pipe in fds, and set FD_CLOEXEC in both file-descriptor flags */
 			/*** TO BE DONE START ***/
-			
+			pipe(fds); //using pipe 1 for retrocompatibility purposes
+			if(fcntl(fds[0], F_SETFD, FD_CLOEXEC) == -1) fatal_errno("error in setting fd flag");
+			if(fcntl(fds[1], F_SETFD, FD_CLOEXEC) == -1) fatal_errno("error in setting fd flag");
 			/*** TO BE DONE END ***/
 			curr_stdout = fds[1];
 			next_stdin = fds[0];
