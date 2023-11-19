@@ -172,6 +172,7 @@ command_t *parse_cmd(char * const cmdstr)
 			if (*tmp=='$') {
 				/* Make tmp point to the value of the corresponding environment variable, if any, or the empty string otherwise */
 				/*** TO BE DONE START ***/
+				tmp = getenv(tmp+1) ? getenv(tmp+1) : "";
 				/*** TO BE DONE END ***/
 			}
 			result->args[result->n_args++] = my_strdup(tmp);
@@ -219,18 +220,16 @@ check_t check_redirections(const line_t * const l)
 	 * message and return CHECK_FAILED otherwise
 	 */
 	/*** TO BE DONE START ***/
-	for(int i = 0; i<l->n_commands; i++) {
-		if(i > 0) {
-			for(int j = 0 ; j < l->commands[i] ; j++) {
-				if(l->commands[i][j])
-			}
+	for(int i = 0 ; i < l->n_commands ; i++) {
+		if(i > 0 && l->commands[i]->in_pathname != 0) {
+			fprintf(stderr, "Parsing error: only the first command of a line can have input-redirection\n");
+			return CHECK_FAILED;
 		}
-		if(i < l->n_commands - 1){
-			
+		if(i < l->n_commands - 1 && l->commands[i]->out_pathname != 0) {
+			fprintf(stderr, "Parsing error: only the last command of a line can have output-redirection\n");
+			return CHECK_FAILED;
 		}
-
-	}
-																																																																														
+	}																																																																										
 	/*** TO BE DONE END ***/
 	return CHECK_OK;
 }
@@ -246,17 +245,41 @@ check_t check_cd(const line_t * const l)
 	 * message and return CHECK_FAILED otherwise
 	 */
 	/*** TO BE DONE START ***/
+	if(strcmp(l->commands[0]->args[0], CD) == 0) {
+		if(l->n_commands > 1) {
+			fprintf(stderr, "Parsing error: cd command must be the only command of the line\n");
+			return CHECK_FAILED;
+		}
+		if(l->commands[0]->in_pathname != 0 || l->commands[0]->out_pathname != 0) {
+			fprintf(stderr, "Parsing error: cd command cannot have I/O redirections\n");
+			return CHECK_FAILED;
+		}
+		if(l->commands[0]->n_args > 2) {
+			fprintf(stderr, "Parsing error: cd command must have only one argument\n");
+			return CHECK_FAILED;
+		}
+	}
 	/*** TO BE DONE END ***/
 	return CHECK_OK;
 }
 
-void wait_for_children()
+void wait_for_children(void)
 {
 	/* This function must wait for the termination of all child processes.
 	 * If a child exits with an exit-status!=0, then you should print a proper message containing its PID and exit-status.
 	 * Similarly, if a child is killed by a signal, then you should print a message specifying its PID, signal number and signal name.
 	 */
 	/*** TO BE DONE START ***/
+	int * wstatus = NULL; // Following the man documentation variables naming datasets
+
+	pid_t pid = wait(wstatus);
+	if(pid == -1) fprintf(stderr, "Wait failed");
+	if(WIFSIGNALED(wstatus)) {
+		int signalNumber = WTERMSIG(wstatus);
+		char * signalName = strsignal(signalNumber);
+		fprintf(stdout, "Process with PID %d has been killed by a signal with number %d and name %s", pid, signalNumber, signalName); 
+	} 
+	else if(wstatus != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d", pid, *wstatus);
 	/*** TO BE DONE END ***/
 }
 
@@ -266,6 +289,10 @@ void redirect(int from_fd, int to_fd)
 	 * That is, use dup/dup2/close to make to_fd equivalent to the original from_fd, and then close from_fd
 	 */
 	/*** TO BE DONE START ***/
+	if(from_fd != NO_REDIR) {
+		if(dup2(from_fd, to_fd) == -1) fatal_errno("error in dup2");
+		if(close(from_fd) == -1) fatal_errno("error in close fd");
+	}
 	/*** TO BE DONE END ***/
 }
 
@@ -279,6 +306,13 @@ void run_child(const command_t * const c, int c_stdin, int c_stdout)
 	 * (printing error messages in case of failure, obviously)
 	 */
 	/*** TO BE DONE START ***/
+	pid_t pid = fork();
+	if(pid == -1) fatal_errno("error in fork");
+	if(pid == 0) {
+		redirect(c_stdin, STDIN_FILENO);
+		redirect(c_stdout, STDOUT_FILENO);
+		if(execvp(c->args[0], c->args) == -1) fatal_errno("error in execvp");
+	}
 	/*** TO BE DONE END ***/
 }
 
@@ -288,6 +322,7 @@ void change_current_directory(char *newdir)
 	 * (printing an appropriate error message if the syscall fails)
 	 */
 	/*** TO BE DONE START ***/
+	if(chdir(newdir) == -1) fprintf(stderr, "Directory non-existent \n");
 	/*** TO BE DONE END ***/
 }
 
@@ -360,7 +395,7 @@ void execute(char * const line)
 	}
 }
 
-int main()
+int main(void)
 {
 	const char * const prompt_suffix = " $ ";
 	const size_t prompt_suffix_len = strlen(prompt_suffix);
