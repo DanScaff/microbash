@@ -90,6 +90,11 @@ void free_command(command_t * const c)
 	/*** TO BE DONE START ***/
 	c->n_args = 0;
 
+	for(int i = 0 ; i < c->n_args ; i++) {
+		free(c->args[i]);
+		c->args[i] = NULL;
+	}
+
 	free(c->args);
 	c->args = NULL;
 
@@ -98,6 +103,8 @@ void free_command(command_t * const c)
 
 	free(c->in_pathname);
 	c->in_pathname = NULL;
+
+	free(c);
 	/*** TO BE DONE END ***/
 }
 
@@ -107,8 +114,14 @@ void free_line(line_t * const l)
 	/*** TO BE DONE START ***/
 	l->n_commands = 0;
 
+	for(int i = 0 ; i < l->n_commands ; i++) {
+		free_command(l->commands[i]);
+		l->commands[i] = NULL;
+	}
 	free(l->commands);
 	l->commands = NULL;
+
+	free(l);
 	/*** TO BE DONE END ***/
 }
 
@@ -270,16 +283,16 @@ void wait_for_children(void)
 	 * Similarly, if a child is killed by a signal, then you should print a message specifying its PID, signal number and signal name.
 	 */
 	/*** TO BE DONE START ***/
-	int * wstatus = NULL; // Following the man documentation variables naming datasets
+	int wstatus = 0; // Following the man documentation variables naming datasets
 
-	pid_t pid = wait(wstatus);
+	pid_t pid = wait(&wstatus);
 	if(pid == -1) fprintf(stderr, "Wait failed");
 	if(WIFSIGNALED(wstatus)) {
 		int signalNumber = WTERMSIG(wstatus);
 		char * signalName = strsignal(signalNumber);
 		fprintf(stdout, "Process with PID %d has been killed by a signal with number %d and name %s", pid, signalNumber, signalName); 
 	} 
-	else if(wstatus != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d", pid, *wstatus);
+	else if(wstatus != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d", pid, wstatus);
 	/*** TO BE DONE END ***/
 }
 
@@ -350,7 +363,7 @@ void execute_line(const line_t * const l)
 			/* Open c->in_pathname and assign the file-descriptor to curr_stdin
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
-			int fd = open(c->in_pathname, O_RDONLY);
+			int fd = open(c->in_pathname, O_RDONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if(fd == -1) fatal_errno("wrong path provided");
 			curr_stdin = fd;
 			/*** TO BE DONE END ***/
@@ -360,7 +373,7 @@ void execute_line(const line_t * const l)
 			/* Open c->out_pathname and assign the file-descriptor to curr_stdout
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
-			int fd = open(c->out_pathname, O_WRONLY);
+			int fd = open(c->out_pathname, O_WRONLY | O_CREAT,  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if(fd == -1) fatal_errno("wrong path provided");
 			curr_stdout = fd;
 			/*** TO BE DONE END ***/
@@ -368,7 +381,7 @@ void execute_line(const line_t * const l)
 			int fds[2];
 			/* Create a pipe in fds, and set FD_CLOEXEC in both file-descriptor flags */
 			/*** TO BE DONE START ***/
-			pipe(fds); //using pipe 1 for retrocompatibility purposes
+			if(pipe(fds) == -1) fatal_errno("error in pipe"); //using pipe 1 for retrocompatibility purposes
 			if(fcntl(fds[0], F_SETFD, FD_CLOEXEC) == -1) fatal_errno("error in setting fd flag");
 			if(fcntl(fds[1], F_SETFD, FD_CLOEXEC) == -1) fatal_errno("error in setting fd flag");
 			/*** TO BE DONE END ***/
