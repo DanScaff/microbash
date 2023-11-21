@@ -89,21 +89,18 @@ void free_command(command_t * const c)
 {
 	assert(c==0 || c->n_args==0 || (c->n_args > 0 && c->args[c->n_args] == 0)); /* sanity-check: if c is not null, then it is either empty (in case of parsing error) or its args are properly NULL-terminated */
 	/*** TO BE DONE START ***/
-	c->n_args = 0;
 
 	for(int i = 0 ; i < c->n_args ; i++) {
 		free(c->args[i]);
-		c->args[i] = NULL;
 	}
 
+	c->n_args = 0;
+
 	free(c->args);
-	c->args = NULL;
 
 	free(c->out_pathname);
-	c->out_pathname = NULL;
 
 	free(c->in_pathname);
-	c->in_pathname = NULL;
 
 	free(c);
 	/*** TO BE DONE END ***/
@@ -113,14 +110,15 @@ void free_line(line_t * const l)
 {
 	assert(l==0 || l->n_commands>=0); /* sanity-check */
 	/*** TO BE DONE START ***/
-	l->n_commands = 0;
 
 	for(int i = 0 ; i < l->n_commands ; i++) {
 		free_command(l->commands[i]);
 		l->commands[i] = NULL;
 	}
+
+	l->n_commands = 0;
+
 	free(l->commands);
-	l->commands = NULL;
 
 	free(l);
 	/*** TO BE DONE END ***/
@@ -259,18 +257,21 @@ check_t check_cd(const line_t * const l)
 	 * message and return CHECK_FAILED otherwise
 	 */
 	/*** TO BE DONE START ***/
-	if(strcmp(l->commands[0]->args[0], CD) == 0) {
-		if(l->n_commands > 1) {
-			fprintf(stderr, "Parsing error: cd command must be the only command of the line\n");
-			return CHECK_FAILED;
-		}
-		if(l->commands[0]->in_pathname != 0 || l->commands[0]->out_pathname != 0) {
-			fprintf(stderr, "Parsing error: cd command cannot have I/O redirections\n");
-			return CHECK_FAILED;
-		}
-		if(l->commands[0]->n_args > 2) {
-			fprintf(stderr, "Parsing error: cd command must have only one argument\n");
-			return CHECK_FAILED;
+
+	for(int i = 0; i < l->n_commands; i++) {
+		if(strcmp(l->commands[i]->args[0], CD) == 0) {
+			if(l->n_commands > 1) {
+				fprintf(stderr, "Parsing error: cd command must be the only command of the line\n");
+				return CHECK_FAILED;
+			}
+			if(l->commands[i]->in_pathname != 0 || l->commands[i]->out_pathname != 0) {
+				fprintf(stderr, "Parsing error: cd command cannot have I/O redirections\n");
+				return CHECK_FAILED;
+			}
+			if(l->commands[i]->n_args > 2) {
+				fprintf(stderr, "Parsing error: cd command must have only one argument\n");
+				return CHECK_FAILED;
+			}
 		}
 	}
 	/*** TO BE DONE END ***/
@@ -291,9 +292,9 @@ void wait_for_children(void)
 	if(WIFSIGNALED(wstatus)) {
 		int signalNumber = WTERMSIG(wstatus);
 		char * signalName = strsignal(signalNumber);
-		fprintf(stdout, "Process with PID %d has been killed by a signal with number %d and name %s", pid, signalNumber, signalName); 
+		fprintf(stdout, "Process with PID %d has been killed by a signal with number %d and name %s\n", pid, signalNumber, signalName); 
 	} 
-	else if(wstatus != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d", pid, wstatus);
+	else if(wstatus != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d\n", pid, wstatus);
 	/*** TO BE DONE END ***/
 }
 
