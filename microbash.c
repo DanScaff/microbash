@@ -26,6 +26,7 @@
 //#include <readline/history.h>
 #include <stdint.h>
 
+
 void fatal(const char * const msg)
 {
 	fprintf(stderr, "%s\n", msg);
