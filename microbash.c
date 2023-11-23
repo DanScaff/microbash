@@ -286,15 +286,16 @@ void wait_for_children(void)
 	 */
 	/*** TO BE DONE START ***/
 	int wstatus = 0; // Following the man documentation variables naming datasets
-
-	pid_t pid = wait(&wstatus);
-	if(pid == -1) fprintf(stderr, "Wait failed");
-	if(WIFSIGNALED(wstatus)) {
-		int signalNumber = WTERMSIG(wstatus);
-		char * signalName = strsignal(signalNumber);
-		fprintf(stdout, "Process with PID %d has been killed by a signal with number %d and name %s\n", pid, signalNumber, signalName); 
-	} 
-	else if(wstatus != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d\n", pid, wstatus);
+	
+	pid_t pid;
+	while((pid = wait(&wstatus)) != -1){
+		if(WIFSIGNALED(wstatus)) {
+			int signalNumber = WTERMSIG(wstatus);
+			char * signalName = strsignal(signalNumber);
+			fprintf(stdout, "Process with PID %d has been killed by a signal with number %d and name %s\n", pid, signalNumber, signalName); 
+		} 
+		else if(WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d\n", pid, WEXITSTATUS(wstatus));
+	}
 	/*** TO BE DONE END ***/
 }
 
@@ -365,7 +366,7 @@ void execute_line(const line_t * const l)
 			/* Open c->in_pathname and assign the file-descriptor to curr_stdin
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
-			int fd = open(c->in_pathname, O_RDONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+			int fd = open(c->in_pathname, O_RDONLY);
 			if(fd == -1) fatal_errno("wrong path provided");
 			curr_stdin = fd;
 			/*** TO BE DONE END ***/
@@ -375,7 +376,7 @@ void execute_line(const line_t * const l)
 			/* Open c->out_pathname and assign the file-descriptor to curr_stdout
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
-			int fd = open(c->out_pathname, O_WRONLY | O_CREAT,  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+			int fd = open(c->out_pathname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 			if(fd == -1) fatal_errno("wrong path provided");
 			curr_stdout = fd;
 			/*** TO BE DONE END ***/
