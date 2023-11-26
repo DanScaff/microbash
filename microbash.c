@@ -63,9 +63,9 @@ char *my_strdup(char *ptr)
 	return rv;
 }
 
-#define malloc I_really_should_not_be_using_a_bare_malloc_eheheh
-#define realloc I_really_should_not_be_using_a_bare_realloc_eheheh
-#define strdup I_really_should_not_be_using_a_bare_strdup_eheheh
+#define malloc I_really_should_not_be_using_a_bare_malloc
+#define realloc I_really_should_not_be_using_a_bare_realloc
+#define strdup I_really_should_not_be_using_a_bare_strdup
 
 static const int NO_REDIR = -1;
 
@@ -285,7 +285,7 @@ void wait_for_children(void)
 	 * Similarly, if a child is killed by a signal, then you should print a message specifying its PID, signal number and signal name.
 	 */
 	/*** TO BE DONE START ***/
-	int wstatus = 0; // Following the man documentation variables naming datasets
+	int wstatus = 0;
 	
 	pid_t pid;
 	while((pid = wait(&wstatus)) != -1){
@@ -384,7 +384,7 @@ void execute_line(const line_t * const l)
 			int fds[2];
 			/* Create a pipe in fds, and set FD_CLOEXEC in both file-descriptor flags */
 			/*** TO BE DONE START ***/
-			if(pipe(fds) == -1) fatal_errno("error in pipe"); //using pipe 1 for retrocompatibility purposes
+			if(pipe(fds) == -1) fatal_errno("error in pipe");
 			if(fcntl(fds[0], F_SETFD, FD_CLOEXEC) == -1) fatal_errno("error in setting fd flag");
 			if(fcntl(fds[1], F_SETFD, FD_CLOEXEC) == -1) fatal_errno("error in setting fd flag");
 			/*** TO BE DONE END ***/

@@ -1,0 +1,7 @@
+ls -l
+ls
+ls -l | grep micro >bar
+cat </proc/cpuinfo | grep processor | wc -l
+cat /proc/cpuinfo | grep processor | wc -l
+echo hello world
+echo $PATH
