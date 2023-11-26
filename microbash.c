@@ -367,7 +367,7 @@ void execute_line(const line_t * const l)
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
 			int fd = open(c->in_pathname, O_RDONLY);
-			if(fd == -1) fatal_errno("wrong path provided");
+			if(fd == -1) fatal_errno("wrong path provided or permission error");
 			curr_stdin = fd;
 			/*** TO BE DONE END ***/
 		}
@@ -377,7 +377,7 @@ void execute_line(const line_t * const l)
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
 			int fd = open(c->out_pathname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-			if(fd == -1) fatal_errno("wrong path provided");
+			if(fd == -1) fatal_errno("wrong path provided or permission error");
 			curr_stdout = fd;
 			/*** TO BE DONE END ***/
 		} else if (a != (l->n_commands - 1)) { /* unless we're processing the last command, we need to connect the current command and the next one with a pipe */
