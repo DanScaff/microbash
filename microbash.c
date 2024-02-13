@@ -291,9 +291,9 @@ void wait_for_children(void)
 		if(WIFSIGNALED(wstatus)) {
 			int signalNumber = WTERMSIG(wstatus);
 			char * signalName = strsignal(signalNumber);
-			fprintf(stdout, "Process with PID %d has been killed by a signal with number %d and name %s\n", pid, signalNumber, signalName); 
+			fprintf(stdout, "Process with PID %jd has been killed by a signal with number %d and name %s\n", (intmax_t)pid, signalNumber, signalName); 
 		} 
-		else if(WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0) fprintf(stdout, "Process with PID %d has terminated with exit-status %d\n", pid, WEXITSTATUS(wstatus));
+		else if(WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0) fprintf(stdout, "Process with PID %jd has terminated with exit-status %d\n", (intmax_t)pid, WEXITSTATUS(wstatus));
 	}
 	/*** TO BE DONE END ***/
 }
