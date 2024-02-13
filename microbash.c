@@ -94,8 +94,6 @@ void free_command(command_t * const c)
 		free(c->args[i]);
 	}
 
-	c->n_args = 0;
-
 	free(c->args);
 
 	free(c->out_pathname);
@@ -184,7 +182,8 @@ command_t *parse_cmd(char * const cmdstr)
 			if (*tmp=='$') {
 				/* Make tmp point to the value of the corresponding environment variable, if any, or the empty string otherwise */
 				/*** TO BE DONE START ***/
-				tmp = getenv(tmp+1) ? getenv(tmp+1) : "";
+				tmp = getenv(tmp + 1);
+				if(tmp == NULL) tmp = "";
 				/*** TO BE DONE END ***/
 			}
 			result->args[result->n_args++] = my_strdup(tmp);
@@ -338,7 +337,7 @@ void change_current_directory(char *newdir)
 	 * (printing an appropriate error message if the syscall fails)
 	 */
 	/*** TO BE DONE START ***/
-	if(chdir(newdir) == -1) fprintf(stderr, "Directory non-existent \n");
+	if(chdir(newdir) == -1) fprintf(stderr, "Error in changing directory: %s\n", strerror(errno));
 	/*** TO BE DONE END ***/
 }
 
@@ -421,10 +420,8 @@ int main(void)
 		 * The memory area must be allocated (directly or indirectly) via malloc.
 		 */
 		/*** TO BE DONE START ***/
-		size_t size = sizeof(char) * 1024;
-		char * buffer = (char *) my_malloc(size);
-		pwd = getcwd(buffer, size);
-		if(pwd == NULL) fatal_errno("error");
+		pwd = getcwd(NULL, 0);
+		if(pwd == NULL) fatal_errno("could not get current working directory");
 		/*** TO BE DONE END ***/
 		pwd = my_realloc(pwd, strlen(pwd) + prompt_suffix_len + 1);
 		strcat(pwd, prompt_suffix);
